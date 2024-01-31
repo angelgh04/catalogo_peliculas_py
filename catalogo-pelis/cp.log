@@ -1,0 +1,10 @@
+INFO: Platform: linux2
+INFO: Version Info: v0.3.0
+DEBUG: Log Path: cp.log
+DEBUG: command: ['python', '/home/angel/Documentos/MiHuayraIqual/WorkspacePrograming/Python/catalogo-peliculas/catalogo-pelis/catalogo_pelis.py']
+DEBUG: args: ['/home/angel/Documentos/MiHuayraIqual/WorkspacePrograming/Python/catalogo-peliculas/catalogo-pelis/catalogo_pelis.py']
+DEBUG: repl: python
+DEBUG: pause: True
+DEBUG: file: None
+INFO: return code: 1 (0x1)
+INFO: elapsed time: 0.009950

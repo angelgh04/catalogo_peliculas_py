@@ -11,7 +11,7 @@ from client.gui_app import Frame, barra_menu
 def main():
     root=tk.Tk()
     root.title('Catálogo de Películas en Python')
-    #root.iconbitmap('img/cp-logo.ico')
+    #root.iconbitmap('catalogo-pelis/img/cp-logo.ico')
     #Para que las dimensiones de la ventana no sea modificable
     root.resizable(0,0)
     

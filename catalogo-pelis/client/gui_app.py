@@ -1,6 +1,8 @@
 import tkinter as tk
 #Importamos para trabajar con las tablas
 from tkinter import ttk
+from model.pelicula_dao import crear_tabla, borrar_tabla
+from model.pelicula_dao import Pelicula, guardar, listar, editar, eliminar
 
 #Definimos la función barra_menu que recibe el root (que es la raíz o ventana)
 def barra_menu(root):
@@ -15,8 +17,8 @@ def barra_menu(root):
     #Agregamos a la barra
     barra_menu.add_cascade(label = 'Inicio', menu = menu_inicio)
     #Agregamos los submenú del menú Inicio
-    menu_inicio.add_command(label='Nuevo Registro')
-    menu_inicio.add_command(label='Eliminar Registro')
+    menu_inicio.add_command(label='Nuevo Registro', command=crear_tabla)
+    menu_inicio.add_command(label='Eliminar Registro', command=borrar_tabla)
     #La opción Salir le agregamos el evento destroy para cerrar la ventana
     menu_inicio.add_command(label='Salir', command =root.destroy)
     
@@ -37,6 +39,7 @@ class Frame(tk.Frame):
         #Empaquetamos
         self.pack()
         #self.config(bg='blue')
+        self.id_pelicula = None
         
         self.campos_pelis()
         self.deshabilitar_campos()
@@ -77,17 +80,17 @@ class Frame(tk.Frame):
         #Definimos los botones
         #Nuevo
         self.boton_nuevo = tk.Button(self, text = "Nuevo", command=self.habilitar_campos)
-        self.boton_nuevo.config(width=20, font=('Arial', 12,'bold'), fg='#DAD5D6', bg='#158645', cursor='hand2', activebackground='#35BD6F')
+        self.boton_nuevo.config(width=20, font=('Arial', 12,'bold'), fg='#FAFAFA', bg='#BD9240', cursor='hand2', activebackground='#F6F098')
         self.boton_nuevo.grid(row=3, column=0, padx=10, pady=10)
         
         #Guardar
         self.boton_guardar = tk.Button(self, text = "Guardar", command=self.guardar_datos)
-        self.boton_guardar.config(width=20, font=('Arial', 12,'bold'), fg='#DAD5D6', bg='#158645', cursor='hand2', activebackground='#35BD6F')
+        self.boton_guardar.config(width=20, font=('Arial', 12,'bold'), fg='#FAFAFA', bg='#158645', cursor='hand2', activebackground='#35BD6F')
         self.boton_guardar.grid(row=3, column=1, padx=10, pady=10)
         
         #Cancelar
         self.boton_cancelar = tk.Button(self, text = "Cancelar", command=self.deshabilitar_campos)
-        self.boton_cancelar.config(width=20, font=('Arial', 12,'bold'), fg='#DAD5D6', bg='#BD152E', cursor='hand2', activebackground='#35BD6F')
+        self.boton_cancelar.config(width=20, font=('Arial', 12,'bold'), fg='#FAFAFA', bg='#BD152E', cursor='hand2', activebackground='#35BD6F')
         self.boton_cancelar.grid(row=3, column=2, padx=10, pady=10)
         
     #Definimos los métodos para dar función a los botones
@@ -102,10 +105,10 @@ class Frame(tk.Frame):
         self.entry_genero.config(state='normal')
             
         self.boton_guardar.config(state='normal')
-        self.boton_cancelar.config(state='normal')
-            
+        self.boton_cancelar.config(state='normal')        
         
     def deshabilitar_campos(self):
+        self.id_pelicula = None
         #Limpiamos los campos al cancelar
         self.mi_nombre.set('')
         self.mi_duracion.set('')
@@ -119,16 +122,37 @@ class Frame(tk.Frame):
         self.boton_cancelar.config(state='disabled')
     
     def guardar_datos(self):
+        pelicula = Pelicula(
+            self.mi_nombre.get(),
+            self.mi_duracion.get(),
+            self.mi_genero.get(),
+        )
         
+        if self.id_pelicula == None:
+            guardar(pelicula)
+        else:
+            editar(pelicula, self.id_pelicula)
+            
+        #Cargamos de nuevo la tabla para que se acutalice el registro
+        self.tabla_peliculas()
         
         self.deshabilitar_campos()
         
     #Diseñamos la tabla para mostrar los registros
     def tabla_peliculas(self):
+        #Recuperamos la lista para mostrar
+        self.lista_peliculas = listar()
+        #Para que se muestre de menor a mayor
+        self.lista_peliculas.reverse()
         
         self.tabla = ttk.Treeview(self, column=('Nombre', 'Duración', 'Genero'))
         #Indicamos en que parte estará la grilla
-        self.tabla.grid(row=4, column=0, columnspan=4)
+        self.tabla.grid(row=4, column=0, columnspan=4, sticky='nse')
+        
+        #Insertamos un scroll para varios registros
+        self.scroll = ttk.Scrollbar(self, orient='vertical', command=self.tabla.yview)
+        self.scroll.grid(row=4, column=4, sticky='nse')
+        self.tabla.configure(yscrollcommand=self.scroll.set)
         
         #Título de las columnas de la tabla
         self.tabla.heading('#0', text='ID')
@@ -136,18 +160,47 @@ class Frame(tk.Frame):
         self.tabla.heading('#2', text='DURACIÓN')
         self.tabla.heading('#3', text='GÉNERO')
         
-        self.tabla.insert('', 0, text='1', values=('Angel', '1 hora', 'Acción'))
+        #Insertamos cada uno de los registros con un for
+        for p in self.lista_peliculas:
+            self.tabla.insert('', 0, text=p[0], values=(p[1], p[2], p[3]))
         
         
         #Botones de la tabla
         #Editar
-        self.boton_editar = tk.Button(self, text = "Editar")
+        self.boton_editar = tk.Button(self, text = "Editar", command=self.editar_datos)
         self.boton_editar.config(width=20, font=('Arial', 12,'bold'), fg='#DAD5D6', bg='#158645', cursor='hand2', activebackground='#35BD6F')
         self.boton_editar.grid(row=5, column=0, padx=10, pady=10)
         
         #Cancelar
-        self.boton_eliminar = tk.Button(self, text = "Eliminar")
+        self.boton_eliminar = tk.Button(self, text = "Eliminar", command=self.eliminar_datos)
         self.boton_eliminar.config(width=20, font=('Arial', 12,'bold'), fg='#DAD5D6', bg='#BD152E', cursor='hand2', activebackground='#35BD6F')
         self.boton_eliminar.grid(row=5, column=1, padx=10, pady=10)
+
+    def editar_datos(self):
+        try:
+            self.id_pelicula = self.tabla.item(self.tabla.selection())['text']
+            self.nombre_pelicula = self.tabla.item(self.tabla.selection())['values'][0]
+            self.duracion_pelicula = self.tabla.item(self.tabla.selection())['values'][1]
+            self.genero_pelicula = self.tabla.item(self.tabla.selection())['values'][2]
+            
+            self.habilitar_campos()
+            
+            self.entry_nombre.insert(0, self.nombre_pelicula)
+            self.entry_duracion.insert(0, self.duracion_pelicula)
+            self.entry_genero.insert(0, self.genero_pelicula)
+        except:
+            pass        
         
+    def eliminar_datos(self):
+        
+        try:
+            self.id_pelicula = self.tabla.item(self.tabla.selection())['text']
+            eliminar(self.id_pelicula)
+            #Cargamos de nuevo la tabla para que se acutalice el registro
+            self.tabla_peliculas()
+            self.id_pelicula = None
+        except:
+            titulo = 'Eliminar Registro'
+            mensaje = 'Error al eliminar registro'
+            messagebox.showerror(titulo, mensaje)
         
